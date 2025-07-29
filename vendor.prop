@@ -18,6 +18,7 @@ persist.vendor.audio.ras.enabled=false
 persist.vendor.audio.ring.filter.mask=0
 persist.vendor.audio.voicecall.speaker.stereo=true
 ro.audio.monitorRotation=true
+ro.hardware.audio.primary=nabu
 ro.vendor.audio.afe.record=true
 ro.vendor.audio.game.effect=true
 ro.vendor.audio.ring.filter=true
@@ -124,7 +125,7 @@ persist.vendor.qcom.bluetooth.a2dp_offload_cap=sbc-aac-aptx-aptxhd-ldac
 persist.vendor.qcom.bluetooth.aac_frm_ctl.enabled=true
 persist.vendor.qcom.bluetooth.aac_vbr_ctl.enabled=false
 persist.vendor.qcom.bluetooth.enable.splita2dp=true
-persist.vendor.qcom.bluetooth.scram.enabled?=true
+persist.vendor.qcom.bluetooth.scram.enabled=false
 persist.vendor.qcom.bluetooth.soc=cherokee
 persist.vendor.qcom.bluetooth.twsp_state.enabled=false
 ro.bluetooth.a2dp_offload.supported=true
@@ -156,7 +157,11 @@ persist.sys.sf.native_mode=2
 ro.surface_flinger.enable_frame_rate_override=false
 ro.surface_flinger.has_HDR_display=true
 ro.surface_flinger.has_wide_color_display=true
+ro.surface_flinger.set_display_power_timer_ms=1000
+ro.surface_flinger.set_idle_timer_ms=80
+ro.surface_flinger.set_touch_timer_ms=200
 ro.surface_flinger.use_color_management=true
+ro.surface_flinger.use_content_detection_for_refresh_rate=true
 ro.surface_flinger.wcg_composition_dataspace=143261696
 ro.vendor.display.ad=1
 ro.vendor.display.ad.sdr_calib_data=/vendor/etc/sdr_config.cfg
@@ -226,6 +231,9 @@ ro.vendor.extension_library=libqti-perfd-client.so
 
 # Qualcomm System Daemon
 persist.vendor.qcomsysd.enabled=1
+
+# Recovery
+ro.recovery.ui.blank_unblank_on_init=true
 
 # Sensors
 persist.vendor.sensors.enable.mag_filter=true

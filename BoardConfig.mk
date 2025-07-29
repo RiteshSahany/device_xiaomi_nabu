@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-COMMON_PATH := device/xiaomi/sm8150-common
+DEVICE_PATH := device/xiaomi/nabu
 
 # A/B
 ifeq ($(TARGET_IS_VAB),true)
@@ -67,8 +67,10 @@ ifeq ($(TARGET_HAS_UDFPS),true)
 TARGET_USES_FOD_ZPOS := true
 endif
 
+TARGET_SCREEN_DENSITY := 360
+
 # Filesystem
-TARGET_FS_CONFIG_GEN := $(COMMON_PATH)/config.fs
+TARGET_FS_CONFIG_GEN := $(DEVICE_PATH)/config.fs
 
 # Fingerprint
 ifeq ($(TARGET_HAS_UDFPS),true)
@@ -76,7 +78,7 @@ TARGET_SURFACEFLINGER_UDFPS_LIB := //hardware/xiaomi:libudfps_extension.xiaomi
 endif
 
 # Init
-TARGET_INIT_VENDOR_LIB ?= //$(COMMON_PATH):init_xiaomi_msmnile
+TARGET_INIT_VENDOR_LIB ?= //$(DEVICE_PATH):init_xiaomi_msmnile
 
 # Kernel
 ifeq ($(TARGET_IS_VAB),true)
@@ -101,6 +103,7 @@ TARGET_KERNEL_SOURCE := kernel/xiaomi/sm8150
 TARGET_KERNEL_CONFIG := \
     vendor/sm8150-perf_defconfig \
     vendor/debugfs.config \
+    vendor/xiaomi/nabu.config \
     vendor/xiaomi/sm8150-common.config
 
 # Media
@@ -163,28 +166,28 @@ BOARD_USES_QCOM_HARDWARE := true
 TARGET_BOARD_PLATFORM := msmnile
 
 # Properties
-TARGET_ODM_PROP += $(COMMON_PATH)/odm.prop
-TARGET_SYSTEM_PROP += $(COMMON_PATH)/system.prop
-TARGET_VENDOR_PROP += $(COMMON_PATH)/vendor.prop
+TARGET_ODM_PROP += $(DEVICE_PATH)/odm.prop
+TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
+TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
 ifneq ($(TARGET_IS_TABLET),true)
-TARGET_VENDOR_PROP += $(COMMON_PATH)/vendor_phone.prop
+TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor_phone.prop
 endif
 
 # Recovery
 BOARD_INCLUDE_RECOVERY_DTBO := true
 ifeq ($(TARGET_IS_VAB),true)
-TARGET_RECOVERY_FSTAB := $(COMMON_PATH)/rootdir/etc/fstab_AB.qcom
+TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/rootdir/etc/fstab_AB.qcom
 else ifneq ($(TARGET_IS_LEGACY),true)
-TARGET_RECOVERY_FSTAB := $(COMMON_PATH)/rootdir/etc/fstab_dynamic.qcom
+TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/rootdir/etc/fstab_dynamic.qcom
 else
-TARGET_RECOVERY_FSTAB := $(COMMON_PATH)/rootdir/etc/fstab_legacy.qcom
+TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/rootdir/etc/fstab_legacy.qcom
 endif
 TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 TARGET_USERIMAGES_USE_EXT4 := true
 TARGET_USERIMAGES_USE_F2FS := true
 
 # Releasetools
-TARGET_RELEASETOOLS_EXTENSIONS := $(COMMON_PATH)
+TARGET_RELEASETOOLS_EXTENSIONS := $(DEVICE_PATH)
 
 # RIL
 ENABLE_VENDOR_RIL_SERVICE := true
@@ -204,9 +207,9 @@ VENDOR_SECURITY_PATCH := 2024-10-01
 # Sepolicy
 include device/qcom/sepolicy_vndr/SEPolicy.mk
 include device/lineage/sepolicy/libperfmgr/sepolicy.mk
-SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += $(COMMON_PATH)/sepolicy/private
-SYSTEM_EXT_PUBLIC_SEPOLICY_DIRS += $(COMMON_PATH)/sepolicy/public
-BOARD_VENDOR_SEPOLICY_DIRS += $(COMMON_PATH)/sepolicy/vendor
+SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/private
+SYSTEM_EXT_PUBLIC_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/public
+BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
 BUILD_BROKEN_VENDOR_PROPERTY_NAMESPACE := true
 
 # Soong
@@ -242,16 +245,16 @@ DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE := \
     hardware/qcom-caf/common/vendor_framework_compatibility_matrix.xml \
     hardware/xiaomi/vintf/xiaomi_framework_compatibility_matrix.xml \
     vendor/lineage/config/device_framework_matrix.xml
-DEVICE_MANIFEST_FILE += $(COMMON_PATH)/manifest.xml
+DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/manifest.xml
 ifeq ($(TARGET_HAS_FM),true)
-DEVICE_MANIFEST_FILE += $(COMMON_PATH)/manifest_fm.xml
+DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/manifest_fm.xml
 endif
 ifneq ($(TARGET_IS_TABLET),true)
-DEVICE_MANIFEST_FILE += $(COMMON_PATH)/manifest_phone.xml
+DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/manifest_phone.xml
 endif
 DEVICE_MATRIX_FILE += hardware/qcom-caf/common/compatibility_matrix.xml
 ODM_MANIFEST_SKUS += nfc
-ODM_MANIFEST_NFC_FILES := $(COMMON_PATH)/manifest_nfc.xml
+ODM_MANIFEST_NFC_FILES := $(DEVICE_PATH)/manifest_nfc.xml
 
 # Wi-Fi
 BOARD_WLAN_DEVICE := qcwcn
@@ -268,4 +271,4 @@ WIFI_HIDL_UNIFIED_SUPPLICANT_SERVICE_RC_ENTRY := true
 WPA_SUPPLICANT_VERSION := VER_0_8_X
 
 # Inherit the proprietary files
-include vendor/xiaomi/sm8150-common/BoardConfigVendor.mk
+include vendor/xiaomi/nabu/BoardConfigVendor.mk

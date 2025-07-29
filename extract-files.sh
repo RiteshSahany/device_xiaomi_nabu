@@ -29,22 +29,14 @@ source "${HELPER}"
 # Default to sanitizing the vendor folder before extraction
 CLEAN_VENDOR=true
 
-ONLY_COMMON=
 ONLY_FIRMWARE=
-ONLY_TARGET=
 KANG=
 SECTION=
 
 while [ "${#}" -gt 0 ]; do
     case "${1}" in
-        --only-common)
-            ONLY_COMMON=true
-            ;;
         --only-firmware)
             ONLY_FIRMWARE=true
-            ;;
-        --only-target)
-            ONLY_TARGET=true
             ;;
         -n | --no-cleanup)
             CLEAN_VENDOR=false
@@ -70,12 +62,12 @@ fi
 
 function blob_fixup() {
     case "${1}" in
-	    system_ext/lib64/libwfdnative.so)
+        system_ext/lib64/libwfdnative.so)
             [ "$2" = "" ] && return 0
             grep -q libbinder_shim.so "${2}" || "${PATCHELF}" --add-needed "libbinder_shim.so" "${2}"
             grep -q libinput_shim.so "${2}" || "${PATCHELF}" --add-needed "libinput_shim.so" "${2}"
             ;;
-	    system_ext/lib/libwfdmmsrc_system.so|system_ext/lib64/libwfdmmsrc_system.so)
+        system_ext/lib/libwfdmmsrc_system.so|system_ext/lib64/libwfdmmsrc_system.so)
             [ "$2" = "" ] && return 0
             grep -q libgui_shim.so "${2}" || "${PATCHELF}" --add-needed "libgui_shim.so" "${2}"
             ;;
@@ -83,13 +75,25 @@ function blob_fixup() {
             [ "$2" = "" ] && return 0
             "${PATCHELF}" --replace-needed "android.media.audio.common.types-V2-cpp.so" "android.media.audio.common.types-V4-cpp.so" "${2}"
             ;;
+        vendor/lib/hw/audio.primary.nabu.so)
+            [ "$2" = "" ] && return 0
+            sed -i "s|/vendor/lib/liba2dpoffload\.so|liba2dpoffload_nabu\.so\x00\x00\x00\x00\x00\x00\x00|g" "${2}"
+            ;;
         vendor/etc/init/init.mi_thermald.rc)
             [ "$2" = "" ] && return 0
             sed -i "/seclabel u:r:mi_thermald:s0/d" "${2}"
             ;;
+        vendor/etc/init/init.batterysecret.rc)
+            [ "$2" = "" ] && return 0
+            sed -i "/seclabel u:r:batterysecret:s0/d" "${2}"
+            ;;
         vendor/lib64/mediadrm/libwvdrmengine.so|vendor/lib64/libwvhidl.so)
             [ "$2" = "" ] && return 0
             grep -q libcrypto_shim.so "${2}" || "${PATCHELF}" --add-needed "libcrypto_shim.so" "${2}"
+            ;;
+        vendor/lib64/camera/components/com.qti.node.watermark.so)
+            [ "$2" = "" ] && return 0
+            grep -q "libpiex_shim.so" "${2}" || "${PATCHELF}" --add-needed "libpiex_shim.so" "${2}"
             ;;
         *)
             return 1
@@ -103,27 +107,25 @@ function blob_fixup_dry() {
     blob_fixup "$1" ""
 }
 
-if [ -z "${ONLY_FIRMWARE}" ] && [ -z "${ONLY_TARGET}" ]; then
-    # Initialize the helper for common device
-    setup_vendor "${DEVICE_COMMON}" "${VENDOR_COMMON:-$VENDOR}" "${ANDROID_ROOT}" true "${CLEAN_VENDOR}"
+# Device configuration
+export DEVICE=nabu
+export VENDOR=xiaomi
 
+# Initialize the helper for nabu device
+setup_vendor "${DEVICE}" "${VENDOR}" "${ANDROID_ROOT}" false "${CLEAN_VENDOR}"
+
+# Extract proprietary files for nabu
+if [ -z "${ONLY_FIRMWARE}" ]; then
     extract "${MY_DIR}/proprietary-files.txt" "${SRC}" "${KANG}" --section "${SECTION}"
-    extract "${MY_DIR}/proprietary-files-fm.txt" "${SRC}" "${KANG}" --section "${SECTION}"
-    extract "${MY_DIR}/proprietary-files-phone.txt" "${SRC}" "${KANG}" --section "${SECTION}"
+    
+    # Extract additional file lists if they exist
+    [ -f "${MY_DIR}/proprietary-files-fm.txt" ] && extract "${MY_DIR}/proprietary-files-fm.txt" "${SRC}" "${KANG}" --section "${SECTION}"
+    [ -f "${MY_DIR}/proprietary-files-phone.txt" ] && extract "${MY_DIR}/proprietary-files-phone.txt" "${SRC}" "${KANG}" --section "${SECTION}"
 fi
 
-if [ -z "${ONLY_COMMON}" ] && [ -s "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-files.txt" ]; then
-    # Reinitialize the helper for device
-    source "${MY_DIR}/../../${VENDOR}/${DEVICE}/extract-files.sh"
-    setup_vendor "${DEVICE}" "${VENDOR}" "${ANDROID_ROOT}" false "${CLEAN_VENDOR}"
-
-    if [ -z "${ONLY_FIRMWARE}" ]; then
-        extract "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-files.txt" "${SRC}" "${KANG}" --section "${SECTION}"
-    fi
-
-    if [ -z "${SECTION}" ] && [ -f "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-firmware.txt" ]; then
-        extract_firmware "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-firmware.txt" "${SRC}"
-    fi
+# Extract firmware if firmware file exists and no specific section is specified
+if [ -z "${SECTION}" ] && [ -f "${MY_DIR}/proprietary-firmware.txt" ]; then
+    extract_firmware "${MY_DIR}/proprietary-firmware.txt" "${SRC}"
 fi
 
 "${MY_DIR}/setup-makefiles.sh"

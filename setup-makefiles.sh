@@ -22,9 +22,13 @@ if [ ! -f "${HELPER}" ]; then
 fi
 source "${HELPER}"
 
+# Device-specific variables
+export DEVICE=nabu
+export VENDOR=xiaomi
+
 function vendor_imports() {
     cat <<EOF >>"$1"
-		"device/xiaomi/sm8150-common",
+		"hardware/qcom-caf/common/libqti-perfd-client",
 		"hardware/qcom-caf/sm8150",
 		"hardware/qcom-caf/wlan",
 		"hardware/xiaomi",
@@ -60,43 +64,33 @@ function lib_to_package_fixup() {
         lib_to_package_fixup_vendor_variants "$@"
 }
 
-# Initialize the helper for common
-setup_vendor "${DEVICE_COMMON}" "${VENDOR_COMMON:-$VENDOR}" "${ANDROID_ROOT}" true
+# Initialize the helper for device
+setup_vendor "${DEVICE}" "${VENDOR}" "${ANDROID_ROOT}" false
 
 # Warning headers and guards
 write_headers "andromeda cepheus crux nabu raphael vayu"
 
-# The standard common blobs
+# The standard device blobs
 write_makefiles "${MY_DIR}/proprietary-files.txt" true
 
-# Include IR blobs if needed
-printf "\n%s\n" "ifeq (\$(TARGET_HAS_FM),true)" >> "${PRODUCTMK}"
-write_makefiles "${MY_DIR}/proprietary-files-fm.txt" true
-printf "%s\n" "endif" >> "${PRODUCTMK}"
+# Include FM blobs if needed
+if [ -f "${MY_DIR}/proprietary-files-fm.txt" ]; then
+    printf "\n%s\n" "ifeq (\$(TARGET_HAS_FM),true)" >> "${PRODUCTMK}"
+    write_makefiles "${MY_DIR}/proprietary-files-fm.txt" true
+    printf "%s\n" "endif" >> "${PRODUCTMK}"
+fi
 
-# Exclude phone blobs from tablet builds
-printf "\n%s\n" "ifneq (\$(TARGET_IS_TABLET),true)" >> "${PRODUCTMK}"
-write_makefiles "${MY_DIR}/proprietary-files-phone.txt" true
-printf "%s\n" "endif" >> "${PRODUCTMK}"
+# Exclude phone blobs from tablet builds (nabu is a tablet)
+if [ -f "${MY_DIR}/proprietary-files-phone.txt" ]; then
+    printf "\n%s\n" "ifneq (\$(TARGET_IS_TABLET),true)" >> "${PRODUCTMK}"
+    write_makefiles "${MY_DIR}/proprietary-files-phone.txt" true
+    printf "%s\n" "endif" >> "${PRODUCTMK}"
+fi
+
+# Include firmware if available
+if [ -f "${MY_DIR}/proprietary-firmware.txt" ]; then
+    append_firmware_calls_to_makefiles "${MY_DIR}/proprietary-firmware.txt"
+fi
 
 # Finish
 write_footers
-
-if [ -s "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-files.txt" ]; then
-    # Reinitialize the helper for device
-    source "${MY_DIR}/../../${VENDOR}/${DEVICE}/setup-makefiles.sh"
-    setup_vendor "${DEVICE}" "${VENDOR}" "${ANDROID_ROOT}" false
-
-    # Warning headers and guards
-    write_headers
-
-    # The standard device blobs
-    write_makefiles "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-files.txt" true
-
-    if [ -f "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-firmware.txt" ]; then
-        append_firmware_calls_to_makefiles "${MY_DIR}/../../${VENDOR}/${DEVICE}/proprietary-firmware.txt"
-    fi
-
-    # Finish
-    write_footers
-fi
